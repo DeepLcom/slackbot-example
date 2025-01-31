@@ -2,7 +2,7 @@ import { noSettingsBlocks } from "./commands/index.mjs";
 import { readOrCreate } from "./utils.mjs";
 
 /** @param {import("./types").CommandsConfig} config */
-export const shortcuts = ({ app, db, translator }) => {
+export const shortcuts = ({ app, db, deeplClient }) => {
   app.shortcut(
     "shortcut_translate_message",
     async ({ ack, body, respond, shortcut, client }) => {
@@ -17,7 +17,7 @@ export const shortcuts = ({ app, db, translator }) => {
       }
 
       const translation = (
-        await translator.translateText(
+        await deeplClient.translateText(
           body.message.text,
           null,
           userSettings.targetLanguage,

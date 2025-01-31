@@ -1,5 +1,5 @@
 import { readOrCreate } from "../utils.mjs";
-import { settingsCommand } from "./settings.mjs";
+import { rephraseStyleToneMap, settingsCommand } from "./settings.mjs";
 
 /** @type {import("@slack/bolt").RespondArguments["blocks"]} */
 export const noSettingsBlocks = [
@@ -34,7 +34,7 @@ export const noSettingsBlocks = [
 ];
 
 /** @param {import("../types").CommandsConfig} config */
-export const commands = ({ app, translator, db }) => {
+export const commands = ({ app, deeplClient, db }) => {
   app.command("/translate", async ({ command, ack, respond, body }) => {
     await ack();
 
@@ -46,7 +46,7 @@ export const commands = ({ app, translator, db }) => {
       });
     }
 
-    const result = await translator.translateText(
+    const result = await deeplClient.translateText(
       command.text,
       null,
       userSettings.targetLanguage,
@@ -70,13 +70,13 @@ export const commands = ({ app, translator, db }) => {
             {
               type: "button",
               text: { type: "plain_text", text: "Send" },
-              action_id: "translate_send",
+              action_id: "message_send",
               value: JSON.stringify({ result }), // Pass metadata as value
             },
             {
               type: "button",
               text: { type: "plain_text", text: "Edit" },
-              action_id: "translate_edit",
+              action_id: "message_edit",
               value: JSON.stringify({ result }), // Pass metadata as value
             },
             {
@@ -90,7 +90,7 @@ export const commands = ({ app, translator, db }) => {
     });
   });
 
-  app.action("translate_edit", async ({ action, ack, body, client }) => {
+  app.action("message_edit", async ({ action, ack, body, client }) => {
     await ack();
     const metadata = JSON.parse(action.value); // Parse metadata from value
 
@@ -98,7 +98,7 @@ export const commands = ({ app, translator, db }) => {
       trigger_id: body.trigger_id,
       view: {
         type: "modal",
-        callback_id: "translate_edit_modal",
+        callback_id: "message_edit_modal",
         title: {
           type: "plain_text",
           text: "Edit Translation",
@@ -134,7 +134,7 @@ export const commands = ({ app, translator, db }) => {
   });
 
   app.view(
-    "translate_edit_modal",
+    "message_edit_modal",
     async ({ ack, body, view, client, respond }) => {
       await ack();
 
@@ -144,6 +144,8 @@ export const commands = ({ app, translator, db }) => {
       const userData = await client.users.info({ user });
 
       const metadata = JSON.parse(view.private_metadata);
+
+      console.log("metadata in modal", metadata);
 
       await client.chat.postMessage({
         channel: metadata.channel.id,
@@ -159,7 +161,7 @@ export const commands = ({ app, translator, db }) => {
     }
   );
 
-  app.action("translate_send", async (opts) => {
+  app.action("message_send", async (opts) => {
     const { action, ack, body, client, say } = opts;
     await ack();
     const metadata = JSON.parse(action.value); // Parse metadata from value
@@ -183,5 +185,61 @@ export const commands = ({ app, translator, db }) => {
     });
   });
 
-  settingsCommand({ app, translator, db });
+  app.command("/write", async ({ command, ack, respond, body }) => {
+    await ack();
+
+    console.log("command", command);
+
+    const userSettings = await readOrCreate(db, body.user_id);
+
+    let writingStyle = undefined;
+    let tone = undefined;
+
+    if (userSettings.rephraseStyleTone) {
+      const styleTone = rephraseStyleToneMap[userSettings.rephraseStyleTone];
+      writingStyle = styleTone.type === "writing_style" ? styleTone.name : undefined;
+      tone = styleTone.type === "tone" ? styleTone.name : undefined;
+    }
+
+    const result = await deeplClient.rephraseText(command.text, null, writingStyle, tone);
+
+    await respond({
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: result.text,
+          },
+        },
+        {
+          type: "divider",
+        },
+        {
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Send" },
+              action_id: "message_send",
+              value: JSON.stringify({ result }), // Pass metadata as value
+            },
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Edit" },
+              action_id: "message_edit",
+              value: JSON.stringify({ result }), // Pass metadata as value
+            },
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Cancel" },
+              action_id: "dismiss_action",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  settingsCommand({ app, deeplClient, db });
 };

@@ -1,10 +1,10 @@
 import { App } from "@slack/bolt";
-import { Translator, TargetLanguageCode, Formality } from "deepl-node";
+import { DeepLClient, TargetLanguageCode, Formality } from "deepl-node";
 import { Low } from "lowdb/node";
 
 export type CommandsConfig = {
   app: App;
-  translator: Translator;
+  deeplClient: DeepLClient;
   db: Low<Db>;
 };
 
@@ -14,6 +14,7 @@ export type Db = {
     {
       targetLanguage: TargetLanguageCode;
       formality: Formality;
+      rephraseStyleTone: string;
     }
   >;
 };

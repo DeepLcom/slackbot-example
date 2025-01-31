@@ -14,3 +14,9 @@ export const updateFormality = async (db, userId, formality) => {
     userSettings[userId].formality = formality;
   });
 };
+
+export const updateRephraseStyleTone = async (db, userId, rephraseStyleTone) => {
+  await db.update(({ userSettings }) => {
+    userSettings[userId].rephraseStyleTone = rephraseStyleTone;
+  });
+};

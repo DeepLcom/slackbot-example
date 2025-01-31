@@ -10,7 +10,8 @@ import { shortcuts } from "./shortcuts.mjs";
 
 invariant(process.env.DEEPL_API_KEY, "DEEPL_API_KEY is not set");
 
-const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
+const deeplClient = new deepl.DeepLClient(process.env.DEEPL_API_KEY);
+
 const { App } = Slack;
 
 // Read or create db.json
@@ -28,8 +29,8 @@ const app = new App({
   appToken: process.env.SLACK_APP_TOKEN, // add this
 });
 
-commands({ app, translator, db });
-shortcuts({ app, db, translator });
+commands({ app, deeplClient, db });
+shortcuts({ app, db, deeplClient });
 
 (async () => {
   // Start your app
