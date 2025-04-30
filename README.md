@@ -1,5 +1,7 @@
 # DeepL Slack Translation Bot
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet.svg)](https://github.com/DeepLcom/deepl-mcp-server/blob/main/LICENSE)
+
 A Slack bot that provides real-time translation capabilities using DeepL's translation API. Users can translate messages directly within Slack using commands or shortcuts.
 
 ## Features
@@ -9,6 +11,12 @@ A Slack bot that provides real-time translation capabilities using DeepL's trans
 - Customizable target language and formality settings
 - Interactive message editing before sending
 - Persistent user preferences
+
+## Requirements
+
+- Node.js version 18 or higher
+- A DeepL API authentication key (Free or Pro account)
+- Slack workspace with appropriate permissions
 
 ## Setup
 
@@ -51,4 +59,17 @@ Configure your preferences using the `/settings` command:
 - Target Language: Choose your preferred translation language
 - Formality: Select between Automatic, Formal, or Informal translation style
 
-User settings are automatically persisted in `db.json`. 
+User settings are automatically persisted in `db.json`.
+
+## Development
+
+### Environment Variables
+
+Using .env file:
+- Copy `.env.example` to `.env`
+- Edit `.env` with your credentials
+- The `.env` file will not be committed to git
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 
